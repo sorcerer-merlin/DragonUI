@@ -266,26 +266,26 @@ local function SkinCloseButton(button, compact)
 
     local normal = button:GetNormalTexture()
     if normal then
-        normal:SetTexture(textures.close)
-        normal:SetTexCoord(0.152344, 0.292969, 0.0078125, 0.304688)
+        normal:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        normal:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 
     local disabled = button:GetDisabledTexture()
     if disabled then
-        disabled:SetTexture(textures.close)
-        disabled:SetTexCoord(0.152344, 0.292969, 0.320312, 0.617188)
+        disabled:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Disabled") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        disabled:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 
     local pushed = button:GetPushedTexture()
     if pushed then
-        pushed:SetTexture(textures.close)
-        pushed:SetTexCoord(0.152344, 0.292969, 0.632812, 0.929688)
+        pushed:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        pushed:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 
     local highlight = button:GetHighlightTexture()
     if highlight then
-        highlight:SetTexture(textures.close)
-        highlight:SetTexCoord(0.449219, 0.589844, 0.0078125, 0.304688)
+        highlight:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        highlight:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 end
 

@@ -779,20 +779,20 @@ local function SkinCloseButton()
 
     local normal = button:GetNormalTexture()
     if normal then
-        Remember(normal):SetTexture(textures.close)
-        normal:SetTexCoord(0.152344, 0.292969, 0.0078125, 0.304688)
+        Remember(normal):SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        normal:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 
     local pushed = button:GetPushedTexture()
     if pushed then
-        Remember(pushed):SetTexture(textures.close)
-        pushed:SetTexCoord(0.152344, 0.292969, 0.632812, 0.929688)
+        Remember(pushed):SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        pushed:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 
     local highlight = button:GetHighlightTexture()
     if highlight then
-        Remember(highlight):SetTexture(textures.close)
-        highlight:SetTexCoord(0.449219, 0.589844, 0.0078125, 0.304688)
+        Remember(highlight):SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight") -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+        highlight:SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
 end
 

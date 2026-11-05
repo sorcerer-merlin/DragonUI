@@ -62,12 +62,12 @@ for row = 1, ALL_ROWS do
     LIFTED[#LIFTED + 1] = "MerchantItem" .. row
 end
 
--- Texcoords on the 256x128 redbutton2x sheet: getter, left, right, top, bottom, blend.
+-- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X: getter, file, blend.
 local CLOSE_STATES = {
-    { "GetNormalTexture", 0.15234375, 0.29296875, 0.0078125, 0.3046875 },
-    { "GetPushedTexture", 0.15234375, 0.29296875, 0.6328125, 0.9296875 },
-    { "GetDisabledTexture", 0.15234375, 0.29296875, 0.3203125, 0.6171875 },
-    { "GetHighlightTexture", 0.44921875, 0.58984375, 0.0078125, 0.3046875, "ADD" },
+    { "GetNormalTexture", "Up" },
+    { "GetPushedTexture", "Down" },
+    { "GetDisabledTexture", "Disabled" },
+    { "GetHighlightTexture", "Highlight", "ADD" },
 }
 
 -- Region suffix, width, height, anchor point, x offset, then left/right/top/bottom texcoords.
@@ -369,14 +369,13 @@ local function styleCloseButton(frame)
     place(button, "TOPRIGHT", frame, "TOPRIGHT", 1, 0)
     button:SetFrameLevel(frame:GetFrameLevel() + 20)
 
-    local sheet = art("UI\\redbutton2x")
     for _, look in ipairs(CLOSE_STATES) do
         local tex = button[look[1]](button)
         if tex then
-            tex:SetTexture(sheet)
-            tex:SetTexCoord(look[2], look[3], look[4], look[5])
-            if look[6] then
-                tex:SetBlendMode(look[6])
+            tex:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-" .. look[2])
+            tex:SetTexCoord(0.15, 0.85, 0.15, 0.85)
+            if look[3] then
+                tex:SetBlendMode(look[3])
             end
         end
     end

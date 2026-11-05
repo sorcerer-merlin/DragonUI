@@ -154,13 +154,14 @@ local function BagsterAddNineSlice(frame)
         closeBtn:SetSize(24, 24)
         local nt = closeBtn:GetNormalTexture()
         if nt then
-            nt:SetTexture(CT.close_btn)
-            nt:SetTexCoord(0.152344, 0.292969, 0.0078125, 0.304688)
+            -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+            nt:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up")
+            nt:SetTexCoord(0.15, 0.85, 0.15, 0.85)
         end
         local pt = closeBtn:GetPushedTexture()
         if pt then
-            pt:SetTexture(CT.close_btn)
-            pt:SetTexCoord(0.152344, 0.292969, 0.320312, 0.617188)
+            pt:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down")
+            pt:SetTexCoord(0.15, 0.85, 0.15, 0.85)
         end
     end
 end

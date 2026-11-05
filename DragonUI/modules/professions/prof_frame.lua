@@ -32,18 +32,15 @@ local function chromeLayout()
 end
 
 local function skinCloseButton(button)
-    local atlas = ForeverAtlas()
-    local function put(setter, getter, name)
-        local info = atlas[name]
-        button[setter](button, info[1])
-        button[getter](button):SetTexCoord(info[4], info[5], info[6], info[7])
+    -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+    local function put(setter, getter, file, blend)
+        button[setter](button, "Interface\\Buttons\\UI-Panel-MinimizeButton-" .. file, blend)
+        button[getter](button):SetTexCoord(0.15, 0.85, 0.15, 0.85)
     end
-    put("SetNormalTexture", "GetNormalTexture", "redbutton-exit")
-    put("SetPushedTexture", "GetPushedTexture", "redbutton-exit-pressed")
-    put("SetDisabledTexture", "GetDisabledTexture", "redbutton-exit-disabled")
-    local hl = atlas["redbutton-highlight"]
-    button:SetHighlightTexture(hl[1], "ADD")
-    button:GetHighlightTexture():SetTexCoord(hl[4], hl[5], hl[6], hl[7])
+    put("SetNormalTexture", "GetNormalTexture", "Up")
+    put("SetPushedTexture", "GetPushedTexture", "Down")
+    put("SetDisabledTexture", "GetDisabledTexture", "Disabled")
+    put("SetHighlightTexture", "GetHighlightTexture", "Highlight", "ADD")
     button:SetSize(24, 24)
 end
 
