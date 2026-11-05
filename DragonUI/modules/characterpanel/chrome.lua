@@ -201,20 +201,19 @@ function CP.ModernizeCloseButton(cb, owner, x, y)
     cb:ClearAllPoints()
     cb:SetPoint("TOPRIGHT", owner, "TOPRIGHT", cb._duiX, cb._duiY)
 
-    -- All four UIPanelCloseButtonNoScripts states; 41..79 on this sheet is disabled, not pushed.
-    local function dress(getter, l, r, t, b, blend)
+    -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X
+    local function dress(getter, file, blend)
         local tex = cb[getter] and cb[getter](cb)
         if not tex then return end
-        tex:SetTexture(REDBUTTON)
-        tex:SetTexCoord(l, r, t, b)
+        tex:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-" .. file)
+        tex:SetTexCoord(0.15, 0.85, 0.15, 0.85)
         if blend then tex:SetBlendMode(blend) end
     end
 
-    dress("GetNormalTexture", 39/256, 75/256, 1/128, 39/128)
-    dress("GetPushedTexture", 39/256, 75/256, 81/128, 119/128)
-    dress("GetDisabledTexture", 39/256, 75/256, 41/128, 79/128)
-    -- Left as the client's old minimize glow otherwise: a square Wrath flare over a modern red X.
-    dress("GetHighlightTexture", 115/256, 151/256, 1/128, 39/128, "ADD")
+    dress("GetNormalTexture", "Up")
+    dress("GetPushedTexture", "Down")
+    dress("GetDisabledTexture", "Disabled")
+    dress("GetHighlightTexture", "Highlight", "ADD")
 end
 
 -- SetPoint without a ClearAllPoints ADDS an anchor, so one stray re-anchor from outside leaves the

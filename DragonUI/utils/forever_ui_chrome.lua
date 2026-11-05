@@ -573,7 +573,31 @@ function ForeverUI.CreateCloseButton(parent, opts)
     local button = CreateFrame("Button", nil, parent)
     local size = opts.size or Metrics.window.closeSize
     button:SetSize(size, size)
-    local prefix = opts.art or (opts.large and "128-redbutton-exit" or "redbutton-exit")
+
+    -- MediEvil Ages: our blue close art (UI-Panel-MinimizeButton-*, Patch-Y), cropped to the X.
+    -- Buttons with their own art, like the editor's reset arrow, keep it.
+    if not opts.art then
+        local function SkinBlue(setter, getter, file, blend)
+            button[setter](button, "Interface\\Buttons\\UI-Panel-MinimizeButton-" .. file, blend)
+            button[getter](button):SetTexCoord(0.15, 0.85, 0.15, 0.85)
+        end
+        SkinBlue("SetNormalTexture", "GetNormalTexture", "Up")
+        SkinBlue("SetPushedTexture", "GetPushedTexture", "Down")
+        SkinBlue("SetDisabledTexture", "GetDisabledTexture", "Disabled")
+        SkinBlue("SetHighlightTexture", "GetHighlightTexture", "Highlight", "ADD")
+
+        button:SetScript("OnClick", function(self)
+            PlaySound(opts.sound or "igMainMenuClose")
+            if opts.onClick then
+                opts.onClick(self)
+            elseif self:GetParent() then
+                self:GetParent():Hide()
+            end
+        end)
+        return button
+    end
+
+    local prefix = opts.art
 
     local function Skin(setter, getter, name)
         local info = ForeverAtlas[name]
