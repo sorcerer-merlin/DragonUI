@@ -25,9 +25,9 @@ L["DragonUI"] = true
 L["Core"] = true
 L["Frames"] = true
 L["Interface"] = true
-L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = true
 L["Editor Mode"] = true
 L["Cannot open options during combat."] = true
+L["Options closed for combat."] = true
 L["Open DragonUI Settings"] = true
 L["Open the DragonUI configuration panel."] = true
 L["Use /dragonui to open the full settings panel."] = true
@@ -43,7 +43,7 @@ L["Heal prediction, absorb shields and animated health loss."] = true
 L["Change columns, rows, and buttons shown per action bar."] = true
 L["Switch micro menu icons between colored and grayscale style."] = true
 L["About"] = true
-L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = true
+L["Bringing the retail WoW look to 3.3.5a."] = true
 L["Created and maintained by NeticSoul, with community contributions."] = true
 
 -- Language
@@ -61,8 +61,17 @@ L["Automatically select greed or disenchant (when available) on green quality it
 L["Settings Window"] = true
 L["Size of this window on top of your UI scale; 1.0 matches the other panels. It never grows past the screen."] = true
 
+-- UI scale
+L["UI Scale"] = true
+L["Custom UI Scale"] = true
+L["Lets the interface go smaller than Blizzard's 0.64. Replaces the UI Scale in Video options."] = true
+L["Size of the whole interface. Lower values fit more on screen."] = true
+L["Auto Scale"] = true
+L["Use the scale that draws one interface pixel per screen pixel at your resolution."] = true
+
 L["Commands: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"] = true
 L["GitHub (select and Ctrl+C to copy):"] = true
+L["New version available! (v%s)"] = true
 L["All"] = true
 L["Error:"] = true
 L["Error: DragonUI addon not found!"] = true
@@ -149,6 +158,8 @@ L["Extra scale applied on top of the minimap scale."] = true
 L["Enable DragonUI player castbar styling."] = true
 L["Enable DragonUI target castbar styling."] = true
 L["Enable DragonUI focus castbar styling."] = true
+L["Hide Blizzard's Castbar"] = true
+L["With this cast bar off, hide Blizzard's too, so none is shown."] = true
 L["Master toggle for the complete action bars system."] = true
 L["Includes main bars, vehicle, stance, pet, totem bars, and button styling."] = true
 L["Micro menu and bags styling."] = true
@@ -461,6 +472,9 @@ L["Hover the coins in your bags to list the gold of every character that has log
 L["Show a tooltip with your other characters' gold when hovering the money in bags."] = true
 L["Show All Realms"] = true
 L["List characters from every realm instead of only the realm you are playing on."] = true
+L["Forget Character"] = true
+L["Delete the selected character's saved gold, item counts and offline bank. Your current character is never listed."] = true
+L["Forget all saved data of %s?"] = true
 
 -- Bag Sort
 L["Bag Sort"] = true
@@ -607,8 +621,10 @@ L["Make the right secondary bar horizontal instead of vertical."] = true
 L["Button Appearance"] = true
 L["Main Bar Only Background"] = true
 L["Only the main action bar buttons will have a background."] = true
-L["Hide Main Bar Background"] = true
-L["Hide the background texture of the main action bar."] = true
+L["Hide Main Bar Art"] = true
+L["Hide Button Backgrounds"] = true
+L["Hide the slot background of every action bar button, leaving only the frames."] = true
+L["Hide the main bar's art and gryphons, leaving only the buttons."] = true
 L["Button Tooltips"] = true
 L["When to show tooltips on action, pet and stance buttons."] = true
 L["Always"] = true
@@ -643,7 +659,6 @@ L["Border Color"] = true
 -- Gryphons
 L["Gryphons"] = true
 L["End-cap ornaments flanking the main action bar."] = true
-L["Gryphon previews are hidden while D3D9Ex is active to avoid client crashes."] = true
 L["Style"] = true
 L["Gryphon Scale"] = true
 L["Gryphon Offset X"] = true
@@ -711,6 +726,9 @@ L["Fade the pet frame until you hover over it."] = true
 L["Fade the pet frame until you enter combat."] = true
 L["Fade party frames until you hover over them."] = true
 L["Fade party frames until you enter combat."] = true
+L["Buff Tooltip"] = true
+L["When to show the box of buffs and debuffs that opens as you hover a party member."] = true
+L["Hide the party frames at all times."] = true
 L["Fade boss frames until you hover over them."] = true
 L["Fade boss frames until you enter combat."] = true
 L["Boss"] = true
@@ -868,7 +886,7 @@ L["Reverse the order of micromenu buttons in the grid."] = true
 L["Hide on Vehicle"] = true
 L["Hide micromenu and bags while in a vehicle."] = true
 L["Show Latency Indicator"] = true
-L["Show a colored bar below the Help button indicating connection quality (green/yellow/red). Requires UI reload."] = true
+L["Show a colored bar below the Help button indicating connection quality (green/yellow/red)."] = true
 
 -- Bags
 L["Bags"] = true
@@ -973,6 +991,8 @@ L["Party"] = true
 L["Class Color Health"] = true
 L["Class icon instead of 3D model for players."] = true
 L["Alternative Class Icons"] = true
+L["Race Portrait"] = true
+L["Race icon instead of 3D model for players."] = true
 L["No Portrait"] = true
 L["Hides the portrait: the frame closes where it was and the bars keep their place."] = true
 L["No Portrait (All Frames)"] = true
@@ -1236,8 +1256,8 @@ L["Enable Nameplates Module"] = true
 L["Apply DragonUI nameplate styling."] = true
 L["Plate Style"] = true
 L["Nameplate Art"] = true
-L["Heritage is the DragonUI art. Modern draws the current World of Warcraft nameplate chrome and is still in beta."] = true
-L["Modern (Beta)"] = true
+L["Heritage is the DragonUI art. Modern draws the current World of Warcraft nameplate chrome."] = true
+L["Modern"] = true
 L["Heritage"] = true
 L["Mouseover Highlight"] = true
 L["Wash the health bar with a bright overlay while the cursor is over the nameplate."] = true
@@ -1495,6 +1515,9 @@ L["Who draws quest icons on plates when Questie is loaded with its own nameplate
 L["Ask"] = true
 L["Pointer Mode"] = true
 L["Show a single quest marker on any objective mob instead of separate kill/loot icons."] = true
+L["Reset Learned Quest Loot"] = true
+L["Forget which mobs nameplates learned drop your quest items. They are learned again as you play."] = true
+L["Forget every quest item source that nameplates have learned?"] = true
 L["Kill Icon"] = true
 L["Choose the icon shown for kill objectives."] = true
 L["Sword"] = true
@@ -1779,3 +1802,9 @@ L["Accept Invites from Friends"] = true
 L["Automatically accept party invites from players on your friends list."] = true
 L["Accept Invites from Guild Members"] = true
 L["Automatically accept party invites from members of your guild."] = true
+L["Camera"] = true
+L["Max Camera Distance"] = true
+L["Let the camera zoom out further than the game's own slider allows."] = true
+L["Camera Distance"] = true
+L["Error Messages"] = true
+L["The red errors in the middle of the screen. Yellow quest updates always show."] = true

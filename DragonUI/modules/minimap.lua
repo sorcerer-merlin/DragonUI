@@ -62,6 +62,8 @@ end
 -- zone text, clock, calendar, tracking and difficulty flag hang from it.
 -- One table, not separate locals: this file sits near Lua 5.1's 200-local limit for a main chunk.
 local TopBar = { WIDTH = 156, HEIGHT = 20, OFFSET_Y = 5 }
+-- The farm bonus means this at UI scale 0.8; any other keeps the farm map's size on screen.
+local FARM_REFERENCE_UI_SCALE = 0.8
 
 -- The player's minimap scale, times the farm bonus while farm mode is on.
 local function GetEffectiveMinimapScale()
@@ -70,8 +72,8 @@ local function GetEffectiveMinimapScale()
     if scale <= 0 then scale = 1 end
 
     if settings and settings.farm_mode_enabled == true then
-        local bonus = tonumber(settings.farm_mode_scale) or 1
-        scale = scale * math.min(math.max(bonus, 1), 2)
+        local bonus = math.min(math.max(tonumber(settings.farm_mode_scale) or 1, 1), 2)
+        scale = scale * math.max(bonus * FARM_REFERENCE_UI_SCALE / UIParent:GetEffectiveScale(), 1)
     end
 
     return scale
@@ -839,15 +841,15 @@ local function GetMinimapGrowthPivot(mover)
     return pivot ~= "" and pivot or "CENTER"
 end
 
--- The shift SetEditorBoxScale gives the editor box for that pivot, in the cluster's own units.
-local function GetClusterGrowthShift(mover)
+-- Farm parks the zone bar, so the map alone hugs the box's edges, as far in as it sits at scale 1.
+local function GetClusterGrowthShift(mover, clusterLift, mapOffsetY)
     local pivot = GetMinimapGrowthPivot(mover)
     if pivot == "CENTER" then return 0, 0 end
-    local grow = MinimapCluster:GetScale() - 1
-    local fromLeft = pivot:find("LEFT") and 0 or (pivot:find("RIGHT") and 1 or 0.5)
-    local fromTop = pivot:find("TOP") and 0 or (pivot:find("BOTTOM") and 1 or 0.5)
-    local ratio = mover:GetEffectiveScale() / MinimapCluster:GetEffectiveScale()
-    return mover:GetWidth() * grow * (0.5 - fromLeft) * ratio, mover:GetHeight() * grow * (fromTop - 0.5) * ratio
+    local scale = MinimapCluster:GetEffectiveScale() / mover:GetEffectiveScale()
+    local inward = mapUnscaledWidth * blipScale / 2 * (scale - 1) / scale
+    local shiftX = (pivot:find("RIGHT") and -inward) or (pivot:find("LEFT") and inward) or 0
+    local mapY = (pivot:find("TOP") and -inward) or (pivot:find("BOTTOM") and inward)
+    return shiftX, mapY and mapY - clusterLift - mapOffsetY or 0
 end
 
 -- Live style switches and farm growth; ReplaceBlizzardFrame anchors both frames itself on every apply.
@@ -855,7 +857,7 @@ local function ApplyStyleAnchors()
     local mover = MinimapModule.minimapFrame
     if not mover then return end
     local clusterLift, mapOffsetY = GetStyleOffsets()
-    local shiftX, shiftY = GetClusterGrowthShift(mover)
+    local shiftX, shiftY = GetClusterGrowthShift(mover, clusterLift, mapOffsetY)
     if MinimapModule.appliedMapOffsetY == mapOffsetY and MinimapModule.appliedShiftX == shiftX
         and MinimapModule.appliedShiftY == shiftY then
         return
@@ -1007,6 +1009,23 @@ local function SnapDurabilityMoverToFigure()
     end
 end
 
+-- The snapshot goes stale when the minimap moves or rescales in the editor while the figure is attached.
+local durabilityFollower = CreateFrame("Frame")
+durabilityFollower:Hide()
+durabilityFollower:SetScript("OnUpdate", function(self)
+    if not (addon.EditorMode and addon.EditorMode:IsActive()) then
+        self:Hide()
+        return
+    end
+    if IsDurabilityCustomPlaced() then return end
+    local cx, cy = DurabilityFrame:GetCenter()
+    local scale = DurabilityFrame:GetEffectiveScale()
+    if cx == self.cx and cy == self.cy and scale == self.scale then return end
+    self.cx, self.cy, self.scale = cx, cy, scale
+    SyncDurabilityMover()
+    SnapDurabilityMoverToFigure()
+end)
+
 local function DetachDurabilityFrame()
     local widgets = addon.db and addon.db.profile and addon.db.profile.widgets
     if not widgets then return end
@@ -1050,6 +1069,10 @@ local function ReplaceBlizzardFrame(frame)
     local minimapCluster = MinimapCluster
     minimapCluster:ClearAllPoints()
     minimapCluster:SetPoint("CENTER", frame, "CENTER", 0, clusterLift)
+    -- Blizzard caps UIPanels at a minimap still in its place; ours can be anywhere.
+    minimapCluster:SetMovable(true)
+    minimapCluster:SetDontSavePosition(true)
+    minimapCluster:SetUserPlaced(true)
     MinimapModule.appliedShiftX, MinimapModule.appliedShiftY = 0, 0
 
     -- In hybrid mode with SexyMap, skip border/zone text customization
@@ -2637,7 +2660,6 @@ function MinimapModule:RegisterLFGEditorFrame()
     -- Keep track of original Show/Hide so we can force-show in editor mode
     local origLFGShow = MiniMapLFGFrame.Show
     local origLFGHide = MiniMapLFGFrame.Hide
-    local lfgWasVisible = false  -- tracks state before editor opened
 
     -- Register wrapper in editor so it becomes a moveable mover
     addon:RegisterEditableFrame({
@@ -2646,14 +2668,15 @@ function MinimapModule:RegisterLFGEditorFrame()
         configPath = {"widgets", "lfgframe"},
         showTest = function()
             -- Hide the real eye so the wrapper can receive mouse/drag events
-            lfgWasVisible = MiniMapLFGFrame:IsShown()
             origLFGHide(MiniMapLFGFrame)
             lfgWrapper:Show()
         end,
         hideTest = function()
-            -- Restore eye visibility after editor closes
-            if lfgWasVisible then
+            -- Same test as MiniMapLFG_UpdateIsShown: the queue may have changed while editing.
+            if GetLFGMode() then
                 origLFGShow(MiniMapLFGFrame)
+            else
+                origLFGHide(MiniMapLFGFrame)
             end
         end,
         module  = self
@@ -2681,9 +2704,12 @@ function MinimapModule:RegisterDurabilityEditorFrame()
                 SnapDurabilityMoverToFigure()
             end
             durabilityMover:Show()
+            durabilityFollower.cx, durabilityFollower.cy, durabilityFollower.scale = nil, nil, nil
+            durabilityFollower:Show()
         end,
         onNudge = DetachDurabilityFrame,
         onHide = function()
+            durabilityFollower:Hide()
             durabilityMover.DragonUI_WasDragged = nil
             durabilityMover.DragonUI_WasAdjustedByEditor = nil
             ApplyDurabilityPosition()
@@ -2792,6 +2818,11 @@ function MinimapModule:RestoreMinimapSystem()
     RestoreCollectedButtonsToOrigin()
     self._releasingLaunchers = nil
 
+    if MinimapCluster then
+        MinimapCluster:SetUserPlaced(false)
+        MinimapCluster:SetDontSavePosition(false)
+        MinimapCluster:SetMovable(false)
+    end
     -- Restore original MinimapCluster state
     if MinimapCluster and self.originalStates.MinimapCluster then
         MinimapCluster:ClearAllPoints()
@@ -4141,4 +4172,17 @@ initFrame:SetScript("OnEvent", function(self, event, addonName)
         self:UnregisterAllEvents()
     end
 end)
+
+-- The farm map's size follows the UI scale, which changes without a reload.
+local function RefreshFarmForUIScale()
+    local settings = GetMinimapSettings()
+    if settings and settings.farm_mode_enabled == true then addon:RefreshMinimap() end
+end
+
+addon.core.RegisterMessage(MinimapModule, "DRAGONUI_UI_SCALE_CHANGED", RefreshFarmForUIScale)
+local uiScaleWatcher = CreateFrame("Frame")
+uiScaleWatcher:RegisterEvent("UI_SCALE_CHANGED")
+uiScaleWatcher:RegisterEvent("DISPLAY_SIZE_CHANGED")
+-- A frame later: the client settles UIParent's scale around these events.
+uiScaleWatcher:SetScript("OnEvent", function() addon:After(0, RefreshFarmForUIScale) end)
 

@@ -83,6 +83,9 @@
     <!-- Retail-style character window reskin -->
     <Include file="characterpanel\characterpanel.xml"/>
 
+    <!-- Retail-style inspect window reskin (after characterpanel: reuses its chrome, tabs and slot art) -->
+    <Script file="inspectframe.lua"/>
+
     <!-- Retail-style vendor window reskin -->
     <Include file="merchant\merchant.xml"/>
 
@@ -128,6 +131,7 @@
     <Include file="talents\talents.xml"/>
 
     <!-- Version Check module (cross-player version broadcast) -->
+    <Script file="versioncheck_signature.lua"/>
     <Script file="versioncheck.lua"/>
 
     <!-- Level Up Enhance (level-up banner with the unlocks list; reads spellbook\trainerdata.lua) -->
@@ -144,6 +148,9 @@
 
     <!-- Auto-accept party invites from friends and guild members -->
     <Script file="autoaccept.lua"/>
+
+    <!-- Max camera distance past the Interface slider -->
+    <Script file="camera.lua"/>
 
     <!-- Addon Manager module -->
     <Script file="addonmanager_icons.lua"/>

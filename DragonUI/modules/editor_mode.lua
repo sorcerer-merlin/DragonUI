@@ -46,6 +46,32 @@ end
 
 addon.ApplyErrorMessagesPosition = ApplyErrorMessagesPosition
 
+local errorMessagesFadeRegistered = false
+local redErrorsMuted = false
+
+-- The frame also carries the yellow quest updates, so only its red event goes; other addons may mute it too.
+local function SetRedErrorsShown(shown)
+    if shown == not redErrorsMuted then return end
+    redErrorsMuted = not shown
+    if shown then
+        UIErrorsFrame:RegisterEvent("UI_ERROR_MESSAGE")
+    else
+        UIErrorsFrame:UnregisterEvent("UI_ERROR_MESSAGE")
+    end
+end
+
+local function RegisterErrorMessagesFade()
+    if errorMessagesFadeRegistered or not (UIErrorsFrame and addon.VisibilityFade) then return end
+    errorMessagesFadeRegistered = true
+    -- A stand-in frame takes the fade: the combat and hidden rows only drive the callback.
+    addon.VisibilityFade.Register("errorMessages", CreateFrame("Frame"), {
+        dbTable = function() return GetWidgetConfig("errorMessages") end,
+        enableMouse = false,
+        immediateHideCallback = true,
+        onVisibilityChange = SetRedErrorsShown,
+    })
+end
+
 -- ApplyErrorMessagesPosition leaves the frame alone without a custom spot, so the reset puts it back itself.
 local function RestoreErrorMessagesDefaultPosition()
     if not UIErrorsFrame then return end
@@ -170,20 +196,6 @@ local function SetupErrorMessagesMover()
         end
     end
 end
-
--- StaticPopup to reload UI after exiting editor mode
-StaticPopupDialogs["DRAGONUI_EDITOR_RELOAD_UI"] = {
-    text = L["UI elements have been repositioned. Reload UI to ensure all graphics display correctly?"],
-    button1 = L["Reload Now"],
-    button2 = L["Later"],
-    OnAccept = function()
-        ReloadUI()
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    preferredIndex = 3,
-}
 
 -- ============================================================================
 -- BUTTON STYLING (matches DragonUI Options panel theme)
@@ -641,12 +653,7 @@ function EditorMode:Show()
     CreateClickWatcher():Show()
 
     addon:ShowAllEditableFrames()
-    
-    -- Enable action bar overlays to block clicks during editing
-    if addon.EnableActionBarOverlays then
-        addon.EnableActionBarOverlays()
-    end
-    
+
     -- Update overlay sizes after showing
     if addon.UpdateOverlaySizes then
         addon.UpdateOverlaySizes()
@@ -658,10 +665,12 @@ errorFrameInit:RegisterEvent("PLAYER_ENTERING_WORLD")
 errorFrameInit:SetScript("OnEvent", function()
     SetupErrorMessagesMover()
     ApplyErrorMessagesPosition()
+    RegisterErrorMessagesFade()
+    if addon.VisibilityFade then addon.VisibilityFade.Update("errorMessages") end
 end)
 
 
-function EditorMode:Hide(showReloadPopup)
+function EditorMode:Hide()
     if InCombatLockdown() then
         addon:Print(L["Cannot toggle editor mode during combat!"])
         return
@@ -678,31 +687,33 @@ function EditorMode:Hide(showReloadPopup)
 
     addon:HideAllEditableFrames(true) -- true = refresh and save positions
     RestoreEditorStaticPopups()
-    
-    -- Disable action bar overlays to restore normal interaction
-    if addon.DisableActionBarOverlays then
-        addon.DisableActionBarOverlays()
-    end
-    
-    -- Only show reload UI popup if not coming from reset positions
-    if showReloadPopup ~= false then
-        StaticPopup_Show("DRAGONUI_EDITOR_RELOAD_UI")
-    end
-    
-    
 end
 
 function EditorMode:Toggle()
-    if self:IsActive() then 
-        self:Hide(true) -- true = show reload UI popup (normal exit)
-    else 
-        self:Show() 
+    if self:IsActive() then
+        self:Hide()
+    else
+        self:Show()
     end
 end
 
 function EditorMode:IsActive()
     return editorActive
 end
+
+-- Protected frames can't move in combat; PLAYER_REGEN_DISABLED is the last moment the exit can still run.
+local combatExit = CreateFrame("Frame")
+combatExit:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatExit:SetScript("OnEvent", function()
+    if not editorActive then return end
+    -- A drag in progress would keep following the cursor once its overlay stops taking the mouse.
+    local dragged = addon.selectedEditorFrame
+    if dragged and dragged.StopMovingOrSizing then dragged:StopMovingOrSizing() end
+    EditorMode:Hide()
+    if not editorActive then
+        addon:Print(L["Editor mode closed for combat."])
+    end
+end)
 
 -- Slash commands
 SLASH_DRAGONUI_EDITOR1 = "/duiedit"
@@ -726,9 +737,8 @@ function EditorMode:ResetAllPositions()
         return
     end
 
-    -- Hide editor mode without showing the generic popup
     if self:IsActive() then
-        self:Hide(false) -- false = don't show reload UI popup
+        self:Hide()
     end
     
     -- Reset only the widgets section using Ace3 defaults

@@ -155,11 +155,15 @@ local TINTS = {
     dark = { body = 0.45, paper = 0.8, streak = 0.35 },
 }
 
+function CP.BodyTint()
+    return CP:Config().dark_background and TINTS.dark or TINTS.stone
+end
+
 function CP.ApplyBodyBackground()
     local cf = _G.CharacterFrame
     if not cf then return end
 
-    local tint = CP:Config().dark_background and TINTS.dark or TINTS.stone
+    local tint = CP.BodyTint()
 
     if cf._duiRockBg then
         cf._duiRockBg:SetVertexColor(tint.body, tint.body, tint.body)
@@ -296,8 +300,9 @@ local function hookSubframes()
             frame:HookScript("OnShow", function(self)
                 CP.ApplyChromeForTab(self:GetName())
             end)
+            -- Once only: the client compresses levels, so a later re-base lands on the sidebar tabs.
+            if cf then frame:SetFrameLevel(cf:GetFrameLevel() + CP.SUBFRAME_LEVEL) end
         end
-        if cf then frame:SetFrameLevel(cf:GetFrameLevel() + CP.SUBFRAME_LEVEL) end
     end
     CP.ApplyChromeForTab(CP.ActiveTabName and CP.ActiveTabName() or "PaperDollFrame")
     hookFrameShow()

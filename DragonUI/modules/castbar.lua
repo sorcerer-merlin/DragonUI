@@ -102,11 +102,14 @@ addon.CastbarModule = CastbarModule
 
 if addon.RegisterModule then
     local L = addon.L
+    -- Each bar follows its own enabled flag, so one pass both applies and restores a profile.
+    local function RefreshAllCastbars()
+        if IsLoggedIn() then CastbarModule:UpdateWidgets() end
+    end
     addon:RegisterModule("castbar", CastbarModule,
         L["Cast Bar"],
         L["Custom player, target, and focus cast bars"], {
-        refresh = "RefreshCastbar",
-        loadOnce = true,
+        lifecycle = { refresh = RefreshAllCastbars, restore = RefreshAllCastbars },
         isEnabled = function()
             local cfg = addon.db and addon.db.profile and addon.db.profile.castbar
             return cfg and cfg.enabled
@@ -484,7 +487,7 @@ DragonUI_HiddenCastbarParent:Hide()
 -- Store original parents for restore
 local blizzardCastbarOriginalParents = {}
 
-local function HideBlizzardCastbar(unitType)
+local function HideBlizzardCastbar(unitType, keepParent)
     -- Skip if already hidden
     if CastbarModule.blizzardHidden[unitType] then
         return
@@ -509,7 +512,7 @@ local function HideBlizzardCastbar(unitType)
     
     -- Keep target/focus under Blizzard's parent so vanilla position logic still runs.
     -- Player castbar can still be reparented to avoid interference with the custom bar.
-    if unitType == "player" and not InCombatLockdown() then
+    if unitType == "player" and not keepParent and not InCombatLockdown() then
         frame:SetParent(DragonUI_HiddenCastbarParent)
     end
     
@@ -544,8 +547,13 @@ local function ShowBlizzardCastbar(unitType)
     end
     
     -- Phase 2: Restore original parent for player castbar only
-    if unitType == "player" and not InCombatLockdown() and blizzardCastbarOriginalParents[unitType] then
-        frame:SetParent(blizzardCastbarOriginalParents[unitType])
+    local originalParent = unitType == "player" and blizzardCastbarOriginalParents[unitType]
+    if originalParent and InCombatLockdown() then
+        addon.CombatQueue:Add("castbar_restore_player_parent", function()
+            if not IsEnabled("player") then frame:SetParent(originalParent) end
+        end)
+    elseif originalParent then
+        frame:SetParent(originalParent)
     end
     
     frame:SetAlpha(1)
@@ -1179,7 +1187,7 @@ local function CreateCastbar(unitType)
     if texture then
         texture:SetVertexColor(1, 1, 1, 1)
     end
-    frames.castbar:SetStatusBarColor(1, 0.7, 0, 1)
+    frames.castbar:SetStatusBarColor(1, 1, 1, 1)
     
     -- Border
     local border = frames.castbar:CreateTexture(nil, 'ARTWORK', nil, 0)
@@ -1533,7 +1541,7 @@ function CastbarModule:HandleCastStart_Simple(unitType, unit, isChanneling)
     -- to prevent a one-frame flash with stale colors on the first cast
     if isChanneling then
         frames.castbar:SetStatusBarTexture(TEXTURES.channel)
-        frames.castbar:SetStatusBarColor(unitType == "player" and 0 or 1, 1, unitType == "player" and 1 or 1, 1)
+        frames.castbar:SetStatusBarColor(1, 1, 1, 1)
         UpdateChannelTicks(frames.castbar, frames.ticks, spell)
         local texture = frames.castbar:GetStatusBarTexture()
         if texture then
@@ -1541,7 +1549,7 @@ function CastbarModule:HandleCastStart_Simple(unitType, unit, isChanneling)
         end
     else
         frames.castbar:SetStatusBarTexture(TEXTURES.standard)
-        frames.castbar:SetStatusBarColor(1, 0.7, 0, 1)
+        frames.castbar:SetStatusBarColor(1, 1, 1, 1)
         local texture = frames.castbar:GetStatusBarTexture()
         if texture then
             texture:SetVertexColor(1, 1, 1, 1)
@@ -1696,7 +1704,7 @@ function CastbarModule:HandleCastStop_Simple(unitType, wasInterrupted, isChannel
             castbar:InvalidateTextureCache()
         end
         castbar:SetStatusBarTexture(TEXTURES.interrupted)
-        castbar:SetStatusBarColor(1, 0, 0, 1)
+        castbar:SetStatusBarColor(1, 1, 1, 1)
         castbar:SetValue(1.0)
         local texture = castbar:GetStatusBarTexture()
         if texture then
@@ -1889,6 +1897,8 @@ function CastbarModule:RefreshCastbar(unitType)
         HideBlizzardCastbar(unitType)
     else
         ShowBlizzardCastbar(unitType)
+        -- Kept under its parent: the GCD bar anchors to Blizzard's player bar while ours is off.
+        if cfg.hideBlizzard then HideBlizzardCastbar(unitType, true) end
         self:HideCastbar(unitType)
         if unitType == "player" and addon.RelayoutGCD then
             addon.RelayoutGCD()
@@ -2359,8 +2369,9 @@ end
 function CastbarModule:HandleTargetChanged()
     local frames = self.frames.target
     local statusBar = frames.castbar
-    
-    if not statusBar then
+
+    -- Turned off this session: Blizzard's bar is back and must not be hidden again below.
+    if not statusBar or not IsEnabled("target") then
         return
     end
     
@@ -2392,8 +2403,8 @@ end
 function CastbarModule:HandleFocusChanged()
     local frames = self.frames.focus
     local statusBar = frames.castbar
-    
-    if not statusBar then
+
+    if not statusBar or not IsEnabled("focus") then
         return
     end
     
@@ -2647,8 +2658,19 @@ local function ShowPlayerCastbarTest()
     end
 end
 
+-- The preview replaced any real cast; pick up one still running, the way a target change does.
+local function ResumeRealCast(unitType)
+    if not IsEnabled(unitType) or not UnitExists(unitType) then return end
+    if UnitCastingInfo(unitType) then
+        CastbarModule:HandleCastingEvent("UNIT_SPELLCAST_START", unitType)
+    elseif UnitChannelInfo(unitType) then
+        CastbarModule:HandleCastingEvent("UNIT_SPELLCAST_CHANNEL_START", unitType)
+    end
+end
+
 local function HidePlayerCastbarTest()
     CastbarModule:HideCastbar("player")
+    ResumeRealCast("player")
 end
 
 local function ShowCastbarTest(unitType)
@@ -2677,6 +2699,7 @@ end
 
 local function HideCastbarTest(unitType)
     CastbarModule:HideCastbar(unitType)
+    ResumeRealCast(unitType)
 end
 
 local function HandleCastbarEditorHide(unitType)
@@ -2761,7 +2784,7 @@ function CastbarModule:ShowCastbar(unitType, spellName, currentValue, maxValue, 
         if texture then
             texture:SetVertexColor(1, 1, 1, 1)
         end
-        castbar:SetStatusBarColor(1, 0, 0, 1)
+        castbar:SetStatusBarColor(1, 1, 1, 1)
         SetCastText(unitType, "Interrupted")
         castbar.selfInterrupt = true
     else
@@ -2771,18 +2794,35 @@ function CastbarModule:ShowCastbar(unitType, spellName, currentValue, maxValue, 
             if texture then
                 texture:SetVertexColor(1, 1, 1, 1)
             end
-            castbar:SetStatusBarColor(0, 1, 0, 1)
+            castbar:SetStatusBarColor(1, 1, 1, 1)
         else
             castbar:SetStatusBarTexture(TEXTURES.standard)
             local texture = castbar:GetStatusBarTexture()
             if texture then
                 texture:SetVertexColor(1, 1, 1, 1)
             end
-            castbar:SetStatusBarColor(1, 0.7, 0, 1)
+            castbar:SetStatusBarColor(1, 1, 1, 1)
         end
         SetCastText(unitType, spellName)
     end
-    
+
+    -- The preview never ticks, so it gets the crop and spark that OnUpdate gives a real cast.
+    if castbar.InvalidateTextureCache then
+        castbar:InvalidateTextureCache()
+    end
+    if castbar.UpdateTextureClipping then
+        castbar:UpdateTextureClipping(isInterrupted and 1 or progress, isChanneling)
+    end
+    if frames.spark then
+        if isInterrupted then
+            frames.spark:Hide()
+        else
+            frames.spark:ClearAllPoints()
+            frames.spark:SetPoint('CENTER', castbar, 'LEFT', progress * castbar:GetWidth(), 0)
+            frames.spark:Show()
+        end
+    end
+
     if frames.textBackground then
         frames.textBackground:Show()
     end

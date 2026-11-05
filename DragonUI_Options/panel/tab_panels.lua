@@ -52,6 +52,13 @@ local subTabs = {
 Panel.subTabSetters = Panel.subTabSetters or {}
 Panel.subTabSetters["panels"] = function(key) activeSubTab = key or "character" end
 
+-- A window's own cog edits settings listed here; a rebuild would wipe search results.
+addon.core.RegisterMessage(Panel, "DRAGONUI_WINDOW_SETTING_CHANGED", function(_, subTab)
+    if activeSubTab ~= subTab or Panel.currentTab ~= "panels" then return end
+    if Panel._lastRenderedQuery or not (Panel.frame and Panel.frame:IsShown()) then return end
+    Panel:SelectTab("panels")
+end)
+
 -- ============================================================================
 -- CHARACTER PANEL
 -- ============================================================================
@@ -61,20 +68,11 @@ local function BuildCharacterSubTab(scroll)
 
     C:AddDescription(cpSection, LO["Modern reskin of the Blizzard character window."])
 
-    C:AddToggle(cpSection, {
+    C:AddModuleToggle(cpSection, {
         label = LO["Enable Character Panel"],
         desc = LO["Apply the DragonUI reskin to the character window."],
-        getFunc = function() return IsEnabled("characterpanel") end,
-        setFunc = function(val)
-            EnsureModuleTable("characterpanel").enabled = val
-            if val then
-                if addon.ApplyCharacterPanelSystem then addon.ApplyCharacterPanelSystem() end
-            else
-                if addon.RestoreCharacterPanelSystem then addon.RestoreCharacterPanelSystem() end
-            end
-            Panel:SelectTab("panels")
-        end,
-        requiresReload = true,
+        moduleName = "characterpanel",
+        after = function() Panel:SelectTab("panels") end,
     })
 
     -- Keys sort in display order: the embedded dropdown lists them alphabetically.
@@ -114,7 +112,6 @@ local function BuildCharacterSubTab(scroll)
             end
         end,
         disabled = function() return not IsEnabled("characterpanel") end,
-        requiresReload = true,
     })
 
     C:AddToggle(cpSection, {
@@ -157,6 +154,29 @@ local function BuildCharacterSubTab(scroll)
         requiresReload = false,
     })
 
+    -- Item Level draws these even on the stock window, so only that module greys them out.
+    local function AddItemLevelToggle(field, label, desc)
+        C:AddToggle(cpSection, {
+            label = label,
+            desc = desc,
+            getFunc = function() return GetModuleField("itemlevel", field) == true end,
+            setFunc = function(val)
+                EnsureModuleTable("itemlevel")[field] = val
+            end,
+            callback = function()
+                if addon.RefreshItemLevel then addon:RefreshItemLevel() end
+                addon.Menu.Refresh()
+            end,
+            disabled = function() return not IsEnabled("itemlevel") end,
+            requiresReload = false,
+        })
+    end
+
+    AddItemLevelToggle("show_repair_cost", LO["Show Repair Cost"],
+        LO["Show the total repair cost of your equipped items in the character window."])
+    AddItemLevelToggle("show_durability", LO["Durability on Character Slots"],
+        LO["Show each equipped item's durability percentage on its character panel slot, opposite the item level."])
+
     -- ====================================================================
     -- STATS SIDEBAR
     -- ====================================================================
@@ -168,6 +188,7 @@ local function BuildCharacterSubTab(scroll)
     local function RefreshSummary()
         local CP = addon.CharacterPanel
         if CP and CP.ApplyGearSummaryVisibility then CP.ApplyGearSummaryVisibility() end
+        addon.Menu.Refresh()
     end
 
     C:AddToggle(statsSection, {
@@ -304,19 +325,10 @@ local function BuildCollectionsSubTab(scroll)
 
     C:AddDescription(colSection, LO["A dedicated window for your mounts and companion pets, replacing the old Pet tab of the character window."])
 
-    C:AddToggle(colSection, {
+    C:AddModuleToggle(colSection, {
         label = LO["Enable Pets & Mounts"],
         desc = LO["Add the Pets & Mounts micro menu button and its window."],
-        getFunc = function() return IsEnabled("collections") end,
-        setFunc = function(val)
-            EnsureModuleTable("collections").enabled = val
-            if val then
-                if addon.ApplyCollectionsSystem then addon.ApplyCollectionsSystem() end
-            else
-                if addon.RestoreCollectionsSystem then addon.RestoreCollectionsSystem() end
-            end
-        end,
-        requiresReload = true,
+        moduleName = "collections",
     })
 
     -- ====================================================================
@@ -344,16 +356,11 @@ local function BuildWorldMapSubTab(scroll)
 
     C:AddDescription(mapSection, LO["Retail-style world map with breadcrumb navigation and a quest log side panel."])
 
-    C:AddToggle(mapSection, {
+    C:AddModuleToggle(mapSection, {
         label = LO["Enable World Map"],
         desc = LO["Apply the DragonUI reskin to the world map."],
-        getFunc = function() return IsEnabled("worldmap") end,
-        setFunc = function(val)
-            EnsureModuleTable("worldmap").enabled = val
-            if val and addon.ApplyWorldMapSystem then addon.ApplyWorldMapSystem() end
-            Panel:SelectTab("panels")
-        end,
-        requiresReload = true,
+        moduleName = "worldmap",
+        after = function() Panel:SelectTab("panels") end,
     })
 
     C:AddToggle(mapSection, {
@@ -466,6 +473,7 @@ local function BuildWorldMapSubTab(scroll)
         setFunc = function(val)
             EnsureModuleTable("worldmap").groupPins = val
             if addon.RefreshWorldMapSystem then addon.RefreshWorldMapSystem() end
+            addon.Menu.Refresh()
         end,
         disabled = function() return not IsEnabled("worldmap") end,
     })
@@ -477,6 +485,7 @@ local function BuildWorldMapSubTab(scroll)
         setFunc = function(val)
             EnsureModuleTable("worldmap").fadeWhenMoving = val
             if addon.RefreshWorldMapSystem then addon.RefreshWorldMapSystem() end
+            addon.Menu.Refresh()
             Panel:SelectTab("panels")
         end,
         disabled = function() return not IsEnabled("worldmap") end,
@@ -490,7 +499,9 @@ local function BuildWorldMapSubTab(scroll)
         min = 0.1,
         max = 1,
         step = 0.05,
+        isPercent = true,
         width = 200,
+        callback = function() addon.Menu.Refresh() end,
         disabled = function()
             return not IsEnabled("worldmap") or GetModuleField("worldmap", "fadeWhenMoving") == false
         end,
@@ -602,15 +613,11 @@ local function BuildTalentsSubTab(scroll)
 
     C:AddDescription(talentSection, LO["Retail-style talent window"])
 
-    C:AddToggle(talentSection, {
+    C:AddModuleToggle(talentSection, {
         label = LO["Enable Talent Window"],
         desc = LO["Replace Blizzard's talent and glyph window."],
-        getFunc = function() return IsEnabled("talents") end,
-        setFunc = function(val)
-            EnsureModuleTable("talents").enabled = val
-            Panel:SelectTab("panels")
-        end,
-        requiresReload = true,
+        moduleName = "talents",
+        after = function() Panel:SelectTab("panels") end,
     })
 
     C:AddSlider(talentSection, {
@@ -665,15 +672,11 @@ local function BuildSpellbookSubTab(scroll)
     local sbSection = C:AddSection(scroll, LO["Spellbook"])
     C:AddDescription(sbSection, LO["Scale the spellbook window."])
 
-    C:AddToggle(sbSection, {
+    C:AddModuleToggle(sbSection, {
         label = LO["Enable Spellbook"],
         desc = LO["Enable the DragonUI spellbook module."],
-        getFunc = function() return IsEnabled("spellbook") end,
-        setFunc = function(val)
-            EnsureModuleTable("spellbook").enabled = val
-            Panel:SelectTab("panels")
-        end,
-        requiresReload = true,
+        moduleName = "spellbook",
+        after = function() Panel:SelectTab("panels") end,
     })
 
     C:AddSlider(sbSection, {
@@ -726,15 +729,11 @@ local function BuildProfessionsSubTab(scroll)
     local section = C:AddSection(scroll, LO["Professions"])
     C:AddDescription(section, LO["Forever-style professions window with side tabs and an overview page."])
 
-    C:AddToggle(section, {
+    C:AddModuleToggle(section, {
         label = LO["Enable Professions"],
         desc = LO["Use the Forever professions window instead of the stock one."],
-        getFunc = function() return IsEnabled("professions") end,
-        setFunc = function(val)
-            EnsureModuleTable("professions").enabled = val
-            Panel:SelectTab("panels")
-        end,
-        requiresReload = true,
+        moduleName = "professions",
+        after = function() Panel:SelectTab("panels") end,
     })
 
     C:AddSlider(section, {

@@ -22,6 +22,7 @@ if not L then return end
 
 -- Combat lockdown messages
 L["Cannot toggle editor mode during combat!"] = true
+L["Editor mode closed for combat."] = true
 L["Cannot reset positions during combat!"] = true
 L["Cannot toggle keybind mode during combat!"] = true
 L["Cannot move frames during combat!"] = true
@@ -249,15 +250,6 @@ L["The addon |cFFFFFF00%s|r conflicts with DragonUI."] = true
 L["Reason:"] = true
 L["Disable the conflicting addon now?"] = true
 L["Keep Both"] = true
-L["DragonUI - D3D9Ex Warning"] = true
-L["DragonUI detected that your client is using D3D9Ex."] = true
-L["DragonUI's action bar system is not compatible with D3D9Ex."] = true
-L["Some DragonUI action bar textures will be missing while this mode is active."] = true
-L["If you want to disable this mode, open WTF\\Config.wtf."] = true
-L["Delete this line:"] = true
-L["Or replace it with:"] = true
-L["Hide Gryphons"] = true
-L["Understood"] = true
 L["DragonUI - UnitFrameLayers Detected"] = true
 L["DragonUI already includes Unit Frame Layers functionality (heal prediction, absorb shields, and animated health loss)."] = true
 L["Choose how to resolve this overlap:"] = true
@@ -616,6 +608,10 @@ L["Copy Text"] = true
 -- Version Check Module
 L["Version Check"] = true
 L["Broadcast and detect addon version updates across group members"] = true
+L["New version available! %s"] = true
+L["Download"] = true
+L["Restart the game to finish updating DragonUI. If this message keeps showing, reinstall it."] = true
+L["DragonUI and DragonUI_Options are from different versions. Install both from the same download."] = true
 
 -- Quest nameplate icons wizard (Questie coexistence)
 L["Quest Icons on Nameplates"] = true
@@ -651,6 +647,8 @@ L["Rename or change the icon"] = true
 L["Assign To:"] = true
 L["Panel settings"] = true
 L["Group Member Pins"] = true
+L["Fade Map While Moving"] = true
+L["Moving Map Alpha"] = true
 L["Class Icons"] = true
 L["Class Colors"] = true
 L["Background"] = true
@@ -687,7 +685,7 @@ L["You are about to sell all junk items and will not be able to buy them back.\n
 L["Repaired all items for %s."] = true
 L["Repaired all items for %s using guild funds."] = true
 L["Not enough gold to repair all items."] = true
-L["Sold %d junk item(s) for %s."] = true
+L["Selling %d junk item(s) for %s."] = true
 
 -- World Map
 L["World Map"] = true
@@ -774,6 +772,9 @@ L["Combo Points"] = true
 L["Combo points as orbs under the player frame and/or on the target frame."] = true
 L["ComboPoints"] = "Combo Points"
 L["DKRunes"] = "Death Knight Runes"
+L["TotemFrame"] = "Totem Timers"
+L["Totem Timers"] = true
+L["The round totem timers under the player frame, with the HD ring and their own spot in the editor."] = true
 L["Orb Style"] = true
 L["Hide When Empty"] = true
 L["Hide the orbs at 0 points instead of showing them empty."] = true
@@ -904,6 +905,7 @@ L["Always Show Mana Text"] = true
 L["Level Style"] = true
 L["Class Portrait"] = true
 L["Alternative Class Icons"] = true
+L["Race Portrait"] = true
 L["Show PvP Icon"] = true
 L["PvP Icon Style"] = true
 L["Scale"] = true
@@ -1126,7 +1128,8 @@ L["Left Bar"] = true
 L["A 12-button action bar independent of every class's bonus bar (stance/stealth/vehicle)."] = true
 L["Button Appearance"] = true
 L["Main Bar Only Background"] = true
-L["Hide Main Bar Background"] = true
+L["Hide Main Bar Art"] = true
+L["Hide Button Backgrounds"] = true
 L["Button Tooltips"] = true
 L["Never"] = true
 L["Show Count Text"] = true
@@ -1181,6 +1184,8 @@ L["Low chance of gaining skill"] = true
 -- ============================================================================
 L["Flight Map"] = true
 L["Retail-style flight master map window chrome"] = true
+L["Inspect Window"] = true
+L["Retail-style frame and tabs for the inspect window"] = true
 L["Mail"] = true
 L["Retail-style mail window with Open All button"] = true
 L["Open All"] = true
