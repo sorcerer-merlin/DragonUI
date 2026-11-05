@@ -428,9 +428,9 @@ local function LayoutThreeSlice(button)
     if not (width and height) or width <= 0 or height <= 0 then
         return
     end
-    local scale = height / Metrics.button.sliceHeight
-    local leftWidth = ForeverAtlas["128-redbutton-left"][2] * scale
-    local rightWidth = ForeverAtlas["128-redbutton-right"][2] * scale
+    -- MediEvil Ages: 12-wide end caps, as UIPanelButtonTemplate2 draws our blue button art
+    local leftWidth = 12
+    local rightWidth = 12
     local leftFraction, rightFraction = 1, 1
 
     if leftWidth + rightWidth > width then
@@ -458,8 +458,6 @@ local function LayoutThreeSlice(button)
     button._fuRight:SetSize(rightWidth, height)
 end
 
-local STATE_SUFFIX = { normal = "", pressed = "-pressed", disabled = "-disabled" }
-
 local function ApplyButtonState(button)
     local state = "normal"
     if not Enabled(button) then
@@ -467,14 +465,17 @@ local function ApplyButtonState(button)
     elseif button._fuPushed then
         state = "pressed"
     end
-    local suffix = STATE_SUFFIX[state]
-    local left = ForeverAtlas["128-redbutton-left" .. suffix]
-    local right = ForeverAtlas["128-redbutton-right" .. suffix]
-    local center = ForeverAtlas["_128-redbutton-center" .. suffix]
+    -- MediEvil Ages: our blue button art (UI-Panel-Button-*, Patch-Y) instead of the red sheet
+    local file = state == "disabled" and "Interface\\Buttons\\UI-Panel-Button-Disabled"
+        or state == "pressed" and "Interface\\Buttons\\UI-Panel-Button-Down"
+        or "Interface\\Buttons\\UI-Panel-Button-Up"
     local leftFraction, rightFraction = button._fuLeftFraction or 1, button._fuRightFraction or 1
-    button._fuLeft:SetTexCoord(left[4], left[4] + (left[5] - left[4]) * leftFraction, left[6], left[7])
-    button._fuRight:SetTexCoord(right[5] - (right[5] - right[4]) * rightFraction, right[5], right[6], right[7])
-    button._fuCenter:SetTexCoord(center[4], center[5], center[6], center[7])
+    button._fuLeft:SetTexture(file)
+    button._fuRight:SetTexture(file)
+    button._fuCenter:SetTexture(file)
+    button._fuLeft:SetTexCoord(0, 0.09375 * leftFraction, 0, 0.6875)
+    button._fuRight:SetTexCoord(0.625 - 0.09375 * rightFraction, 0.625, 0, 0.6875)
+    button._fuCenter:SetTexCoord(0.09375, 0.53125, 0, 0.6875)
 end
 
 local function RefreshButton(button)
@@ -510,22 +511,17 @@ function ForeverUI.SkinButton(button)
     button._fuSkinned = true
     HideNativeArt(button)
 
-    local sheet = ForeverAtlas["128-redbutton-left"][1]
     button._fuLeft = button:CreateTexture(nil, "BACKGROUND")
     button._fuRight = button:CreateTexture(nil, "BACKGROUND")
     button._fuCenter = button:CreateTexture(nil, "BACKGROUND")
-    button._fuLeft:SetTexture(sheet)
-    button._fuRight:SetTexture(sheet)
-    button._fuCenter:SetTexture(sheet)
     button._fuLeft:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
     button._fuRight:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
     button._fuCenter:SetPoint("TOPLEFT", button._fuLeft, "TOPRIGHT", 0, 0)
     button._fuCenter:SetPoint("BOTTOMRIGHT", button._fuRight, "BOTTOMLEFT", 0, 0)
 
-    local highlight = ForeverAtlas["128-redbutton-highlight"]
-    button:SetHighlightTexture(highlight[1], "ADD")
+    button:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Button-Highlight", "ADD")
     local texture = button:GetHighlightTexture()
-    texture:SetTexCoord(highlight[4], highlight[5], highlight[6], highlight[7])
+    texture:SetTexCoord(0, 0.625, 0, 0.6875)
     texture:ClearAllPoints()
     texture:SetAllPoints(button)
 

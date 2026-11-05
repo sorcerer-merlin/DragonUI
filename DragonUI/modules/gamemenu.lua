@@ -268,7 +268,7 @@ CreateDragonUIButton = function()
 
     -- GameMenuButtonTemplate sets the correct hit rect and default sizing.
     dragonUIButton = CreateFrame("Button", "DragonUIGameMenuButton", menuHost, "GameMenuButtonTemplate")
-    dragonUIButton:SetWidth(140)
+    dragonUIButton:SetWidth(144) -- MediEvil Ages: NewEra skins the stock buttons at 144, so match them
     dragonUIButton:SetText(L["DragonUI"])
 
     local forever = addon.ForeverUI

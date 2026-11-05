@@ -897,8 +897,7 @@ local function AddMenuButton()
     if menuBtn or HasOtherAddonsButton() then return end
 
     menuBtn = CreateFrame("Button", "GameMenuButtonDragonUIAddons", GameMenuFrame, "GameMenuButtonTemplate")
-    -- 140 like gamemenu.lua: at the template's 144 the Forever skin looks wider than the stock buttons.
-    menuBtn:SetWidth(140)
+    menuBtn:SetWidth(144) -- MediEvil Ages: NewEra skins the stock buttons at 144, so match them
     menuBtn:SetText(ADDONS)
 
     if addon.ForeverUI and addon.ForeverUI.SkinButton then
